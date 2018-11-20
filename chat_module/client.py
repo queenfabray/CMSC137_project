@@ -10,72 +10,83 @@ PORT = 80
 
 tcp_packet = tcp_packet_pb2.TcpPacket
 
-def send_over_socket(sock, message):
-    delimiter = encoder._VarintBytes(len(message))
-    message = delimiter + message
-    msg_len = len(message)
-    total_sent = 0
+def connect_to_server(client, lobby_id):
 
-    while total_sent < msg_len:
-        sent = sock.send(message[total_sent:])
-        if sent == 0:
-            raise RuntimeError('Socket connection broken')
-        total_sent = total_sent + sent
+    connect_packet = tcp_packet.ConnectPacket()
+    connect_packet.type = tcp_packet.CONNECT
+    connect_packet.player.name = client.name
+    connect_packet.lobby_id = lobby_id
+    connect_packet.update = tcp_packet.ConnectPacket.NEW
 
+def send_to_server(sock, packet):
+
+    # Serialize packet first before sending to server
+    return sock.send(packet.SerializeToString()) # returns max no.
 
 def main():
 
-    # Connect over tcp_packet_pb2 socket
+    lobby_id = "AB2L" # custom lobby
+
+    # Socket to be used
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((SERVER, PORT))
 
-    lobby = tcp_packet.CreateLobbyPacket()
-    lobby.type = tcp_packet.CREATE_LOBBY
-    lobby.max_players = 3
+    player_list_packet = tcp_packet.PlayerListPacket()
+    player_list_packet.type = tcp_packet.PLAYER_LIST
 
-    lobby_id = sock.send(lobby.SerializeToString())
-    lobby_id = str(lobby_id)
-    print(lobby_id)
+    send_to_server(sock, player_list_packet)
 
-    p1 = player_pb2.Player()
-    p1.name = raw_input("Enter name: ")
+    player_list = player_list_packet.player_list
+    no_of_players = len(player_list)
 
-    host = tcp_packet.ConnectPacket()
-    host.type = tcp_packet.CONNECT
-    # host.player = p1
-    host.lobby_id = lobby_id
-    host.update = tcp_packet.ConnectPacket.NEW
+    # ----------If custom lobby won't be used --------
+    # if no_of_players == 0:
+    #     # Send a lobby packet
+    #     lobby_packet = tcp_packet.CreateLobbyPacket()
+    #     lobby_packet.type = tcp_packet.CREATE_LOBBY
+    #     lobby_packet.max_players = 3
 
-    chat = tcp_packet.ChatPacket()
-    chat.type = tcp_packet.CHAT
-    # chat.player = p1
+    #     lobby_id = send_to_server(sock, lobby_packet) # returns lobby id
+    #     lobby_id = str(lobby_id)
+
+    #     print("Lobby id: " + lobby_id)
+    #     print("Server can hold up to " + str(lobby_packet.max_players) + " players.")
+
+    # if lobby_id == -1:
+    #     print("No lobby has been created.")
+        # return
+
+    # Create a client ('host' is just the first player to connect)
+    name = raw_input("Enter name: ")
+    client = player_pb2.Player()
+    client.name = name
+
+    # Connect now the client to server
+    connect_to_server(client, lobby_id)
+
+    # Create chat packet
+    chat_packet = tcp_packet.ChatPacket()
+    chat_packet.type = tcp_packet.CHAT
+    chat_packet.player.name = client.name
 
     while True:
-        chat.message = raw_input("Enter message: ")
-        sock.send(chat.SerializeToString())
+        received = sock.recv(1024)
+        print(received)
 
-    # send_over_socket(sock, lobby.SerializeToString())
+        message = raw_input(name + ": ")
+        chat_packet.message = message
 
-    # for i in range(NUM_OF_TESTS):
+        send_to_server(sock, chat_packet)
 
-    #     print('Starting test {}'.format(i))
+        if(message == "bye"):
+            print(player_list)
+            disconnect_packet = tcp_packet.DisconnectPacket()
+            disconnect_packet.player.name = name
+            disconnect_packet.update = tcp_packet.DisconnectPacket.NORMAL
 
-    #     player = player_pb2.Player()
+            return
 
-
-    #     command = message_pb2.Command()
-    #     command.type = message_pb2.Command.START_TEST
-    #     command.name = 'Test Case {}'.format(i)
-    #     command.data = 'Test Data'
-
-    #     send_over_socket(sock, command.SerializeToString())
-    #     sleep(2)
-
-    # command = message_pb2.Command()
-    # command.type = message_pb2.Command.SHUTDOWN
-    # command.name = 'Shutting down'.format(i)
-    # send_over_socket(sock, command.SerializeToString())
-
+    sock.close()
 
 if __name__ == '__main__':
     main()
