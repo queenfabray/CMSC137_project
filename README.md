@@ -10,3 +10,6 @@ pip install pygame
 
 # Install tkinter
 apt-get install python3-tk
+
+# Install Pillow
+pip install Pillow
