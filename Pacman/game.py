@@ -32,7 +32,7 @@ class Pyman(pygame.sprite.Sprite):
     def __init__(self, images, x, y, speed, life_pos, life_image):
         pygame.sprite.Sprite.__init__(self)
         self.images = images
-        self.image = self.images['r']
+        self.image = self.images['right']
         self.rect = self.image.get_rect()
         self.start_x = x
         self.start_y = y
@@ -70,16 +70,16 @@ class Pyman(pygame.sprite.Sprite):
 
         if self.direction == "up":
             self.rect.y += self.speed * -1
-            self.image = self.images['u']
+            self.image = self.images['up']
         if self.direction == "down":
             self.rect.y += self.speed * 1
-            self.image = self.images['d']
+            self.image = self.images['down']
         if self.direction == "right":
             self.rect.x += self.speed * 1
-            self.image = self.images['r']
+            self.image = self.images['right']
         if self.direction == "left":
             self.rect.x += self.speed * -1
-            self.image = self.images['l']
+            self.image = self.images['left']
 
         # Change mouth
         if self.counter >= 15:
@@ -98,6 +98,12 @@ class Pyman(pygame.sprite.Sprite):
 
     def check_if_touch(self):
         if pygame.sprite.spritecollide(self, ghost_group, False) != []:
+            self.image = self.images['c']
+            pygame.display.update()
+
+            # for i in range(1, 7):
+            #     self.image = self.images[''+str(i)]
+
             if self.can_eat == True:
                 pygame.sprite.spritecollide(self, ghost_group, True)[0].restart()
                 self.score += 150
@@ -154,7 +160,7 @@ class Pyman(pygame.sprite.Sprite):
                                  self.life_pos[1] + 220))
 
 #give PyMan a shape
-dir = ['r', 'u', 'l', 'd']
+directions = ['right', 'up', 'left', 'down']
 pyman_images = {}
 
 # Insert first the closed pacman
@@ -162,13 +168,18 @@ pyman_image_c = pygame.image.load("./image/pacman/pacmanc.png")
 pyman_image_c = pygame.transform.scale(pyman_image_c, (block_size - 2, block_size - 2))
 pyman_images['c'] = pyman_image_c
 
+for i in range(1, 7):
+    pacman_image = pygame.image.load("./image/pacman/pdying" + str(i) + ".png")
+    pacman_image = pygame.transform.scale(pacman_image, (block_size - 2, block_size - 2))
+    pyman_images[''+str(i)] = pacman_image
+
 pyman_image_r = pygame.image.load("./image/pacman/pacmanr.png")
 pyman_image_r = pygame.transform.scale(pyman_image_r, (block_size - 2, block_size - 2))
 
 pacman_image = pyman_image_r # used for rotation
 
 for i in range(4):
-    pyman_images[dir[i]] = pacman_image
+    pyman_images[directions[i]] = pacman_image
     pacman_image = pygame.transform.rotate(pacman_image, 90)
 
 # pyman_image_l = pygame.image.load("./image/pacman/pacmanr.png")
@@ -223,6 +234,7 @@ class Ghost(pygame.sprite.Sprite):
         self.last_node = (x, y)
         self.in_home = True
         self.direction = random.choice(["left", "right"])
+        self.counter = 0
 
     def refresh_direction(self, pacman_rect, node_list):
         if (self.rect.x, self.rect.y) in node_list:
@@ -259,6 +271,7 @@ class Ghost(pygame.sprite.Sprite):
             new_possible_directions = directions if new_possible_directions == [] else new_possible_directions
 
             direct_sight_bool, direct_sight_direction = self.direct_sight(pacman_rect)
+
             if direct_sight_bool:
                 new_possible_directions = [value for value in directions if value in direct_sight_direction]
                 new_possible_directions = directions if new_possible_directions == [] else new_possible_directions
@@ -267,6 +280,8 @@ class Ghost(pygame.sprite.Sprite):
 
     #give the ghost the ability to move
     def move(self):
+        curr_index = 0
+
         if self.in_home == True:
             self.go_out_home()
 
@@ -276,16 +291,34 @@ class Ghost(pygame.sprite.Sprite):
             if self.direction == "right":
                 self.rect.x += self.speed
                 self.image = self.images[0]
+                curr_index = 0
+
             if self.direction == "left":
                 self.rect.x -= self.speed
-                self.image = self.images[1]
+                self.image = self.images[4]
+                curr_index = 4
+
             if self.direction == "down":
                 self.rect.y += self.speed
+                self.image = self.images[6]
+                curr_index = 6
+
             if self.direction == "up":
                 self.rect.y -= self.speed
+                self.image = self.images[2]
+                curr_index = 2
 
             if self.rect.x < -self.rect.width:
                 self.rect.x = WIDTH
+
+            # Change ghost's feet position
+            if self.counter >= 15:
+                self.image = self.images[curr_index+1]
+
+            if self.counter > 16:
+                self.counter = 0
+
+            self.counter += 1
 
     def direct_sight(self, pacman_rect):
         pacman_directions = []
@@ -366,50 +399,100 @@ def distance(a, b):
 
 ghosts_move = False
 
+ghost_colors = ['cian', 'pink', 'orange', 'red']
+
+all_ghost_list = []
+
+for i in range(4):
+    ghost_list = []
+
+    for j in range(4):
+
+        for k in range(1, 3):
+            ghost_image = pygame.image.load("./image/ghost/" + str(ghost_colors[i]) + "-" + str(directions[j]) + str(k) + ".png")
+            ghost_image = pygame.transform.scale(ghost_image, (block_size, block_size))
+
+            ghost_list.append(ghost_image)
+
+    # ghost_image = pygame.image.load("./image/ghost/" + ghost_colors[i] + "-left2.png")
+    # ghost_list.append(ghost_image)
+
+    # ghost_image = pygame.image.load("./image/ghost/" + ghost_colors[i] + "-right1.png")
+    # ghost_list.append(ghost_image)
+
+    # ghost_image = pygame.image.load("./image/ghost/" + ghost_colors[i] + "-right2.png")
+    # ghost_list.append(ghost_image)
+
+    all_ghost_list.append(ghost_list)
+    print(all_ghost_list)
+
 #giving ghosts some shape!
-ghost_image1_r = pygame.image.load("./image/ghost/cian-left2.png")
-ghost_image1_r = pygame.transform.scale(ghost_image1_r, (block_size,
-                                                   block_size))
-ghost_image1_l = pygame.image.load("./image/ghost/cian-right2.png")
-ghost_image1_l = pygame.transform.scale(ghost_image1_l, (block_size,
-                                                   block_size))
+# ghost_image1_l1 = pygame.image.load("./image/ghost/cian-left1.png")
+# ghost_image1_l1 = pygame.transform.scale(ghost_image1_l1, (block_size,
+#                                                    block_size))
 
-ghost_image2_r = pygame.image.load("./image/ghost/pink-left2.png")
-ghost_image2_r = pygame.transform.scale(ghost_image2_r, (block_size,
-                                                   block_size))
-ghost_image2_l = pygame.image.load("./image/ghost/pink-right2.png")
-ghost_image2_l = pygame.transform.scale(ghost_image2_l, (block_size,
-                                                   block_size))
+# ghost_image1_l2 = pygame.image.load("./image/ghost/cian-left2.png")
+# ghost_image1_l2 = pygame.transform.scale(ghost_image1_l2, (block_size,
+#                                                    block_size))
 
-ghost_image3_r = pygame.image.load("./image/ghost/orange-left2.png")
-ghost_image3_r = pygame.transform.scale(ghost_image3_r, (block_size,
-                                                   block_size))
-ghost_image3_l = pygame.image.load("./image/ghost/orange-left2.png")
-ghost_image3_l = pygame.transform.scale(ghost_image3_l, (block_size,
-                                                   block_size))
+# ghost_image1_r = pygame.image.load("./image/ghost/cian-right2.png")
+# ghost_image1_r = pygame.transform.scale(ghost_image1_r, (block_size,
+#                                                    block_size))
 
-ghost_images1 = [ghost_image1_r, ghost_image1_l]
-ghost_images2 = [ghost_image2_r, ghost_image2_l]
-ghost_images3 = [ghost_image3_r, ghost_image3_l]
+# ghost_image2_l = pygame.image.load("./image/ghost/pink-left2.png")
+# ghost_image2_l = pygame.transform.scale(ghost_image2_l, (block_size,
+#                                                    block_size))
+# ghost_image2_r = pygame.image.load("./image/ghost/pink-right2.png")
+# ghost_image2_r = pygame.transform.scale(ghost_image2_r, (block_size,
+#                                                    block_size))
+
+# ghost_image3_r = pygame.image.load("./image/ghost/orange-right2.png")
+# ghost_image3_r = pygame.transform.scale(ghost_image3_r, (block_size,
+#                                                    block_size))
+# ghost_image3_l = pygame.image.load("./image/ghost/orange-left2.png")
+# ghost_image3_l = pygame.transform.scale(ghost_image3_l, (block_size,
+#                                                    block_size))
+
+# ghost_images1 = [ghost_image1_r, ghost_image1_l1, ghost_image1_l2]
+# ghost_images2 = [ghost_image2_r, ghost_image2_l]
+# ghost_images3 = [ghost_image3_r, ghost_image3_l]
 
 #create Ghosts instance
-ghost1 = Ghost(ghost_images1,
+
+ghost_instances = []
+
+for i in range(4):
+
+    ghost = Ghost(all_ghost_list[i],
                block_size * 12 - block_size / 2,
                block_size * 15 - block_size / 2,
                speed)
 
-ghost2 = Ghost(ghost_images2,
-               block_size * 15 + block_size / 2,
-               block_size * 15 - block_size / 2,
-               speed)
+    ghost_instances.append(ghost)
 
-ghost3 = Ghost(ghost_images3,
-               block_size * 12 - block_size / 2,
-               block_size * 14 - block_size / 2,
-               speed)
+# ghost1 = Ghost(all_ghost_list[i],
+#                block_size * 12 - block_size / 2,
+#                block_size * 15 - block_size / 2,
+#                speed)
 
-ghost_list = [ghost1, ghost2, ghost3]
-ghost_group = pygame.sprite.Group(ghost_list)
+# ghost2 = Ghost(all_ghost_list[1],
+#                block_size * 15 + block_size / 2,
+#                block_size * 15 - block_size / 2,
+#                speed)
+
+# ghost3 = Ghost(all_ghost_list[2],
+#                block_size * 12 - block_size / 2,
+#                block_size * 15 - block_size / 2,
+#                speed)
+
+# ghost4 = Ghost(all_ghost_list[3],
+#                block_size * 12 - block_size / 2,
+#                block_size * 15 - block_size / 2,
+#                speed)
+
+# ghost_instances = [ghost1, ghost2, ghost3, ghost4]
+
+ghost_group = pygame.sprite.Group(ghost_instances)
 
 #acquiring map images
 map_image = "./image/PixelMap.png"
@@ -504,6 +587,7 @@ while not game_ended:
         if ghosts_move:
             ghosts.move()
 
+    pyman.check_if_touch()
     pyman.move()
 
     # Display update
@@ -513,7 +597,6 @@ while not game_ended:
     pyman_group.draw(window)
     ghost_group.draw(window)
 
-    pyman.check_if_touch()
     pyman.life_display()
     pyman.get_points(window)
 
