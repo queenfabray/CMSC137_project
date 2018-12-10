@@ -1,7 +1,7 @@
 # CMSC137_project
 
 # Pacman
-From https://github.com/marcon21/Pyman
+From a single-player Pacman game https://github.com/marcon21/Pyman
 
 Improved GUI
 
