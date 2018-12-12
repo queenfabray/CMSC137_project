@@ -1,9 +1,7 @@
 # CMSC137_project
 
 # Pacman
-From https://github.com/marcon21/Pyman
-
-Improved GUI
+A single-player Pacman game from https://github.com/marcon21/Pyman turned into a multiplayer one
 
 # Install pygame
 pip install pygame
