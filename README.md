@@ -1,7 +1,7 @@
 # CMSC137_project
 
 # Pacman
-From a single-player Pacman game https://github.com/marcon21/Pyman
+From https://github.com/marcon21/Pyman
 
 Improved GUI
 
@@ -13,3 +13,6 @@ apt-get install python3-tk
 
 # Install Pillow
 pip install Pillow
+
+# Install PyGame Menu
+pip install pygame-menu
